@@ -1,0 +1,28 @@
+
+static void sm3_pad(SM3_CTX* ctx) {
+    // 补0x80（10000000）
+    ctx->buffer[ctx->buffer_len++] = 0x80;
+
+    // 计算需要填充的0字节数
+    size_t remaining = SM3_BLOCK_SIZE - ctx->buffer_len;
+    if (remaining < 8) {  // 剩余空间不足存放64位长度，需多补一个块
+        memset(ctx->buffer + ctx->buffer_len, 0, remaining);
+        ctx->buffer_len = 0;
+        remaining = SM3_BLOCK_SIZE;
+    }
+
+    // 填充0
+    memset(ctx->buffer + ctx->buffer_len, 0, remaining - 8);
+    ctx->buffer_len += remaining - 8;
+
+    // 填充消息总长度（64位大端序）
+    uint64_t len = ctx->total_bits;
+    ctx->buffer[ctx->buffer_len++] = (uint8_t)(len >> 56);
+    ctx->buffer[ctx->buffer_len++] = (uint8_t)(len >> 48);
+    ctx->buffer[ctx->buffer_len++] = (uint8_t)(len >> 40);
+    ctx->buffer[ctx->buffer_len++] = (uint8_t)(len >> 32);
+    ctx->buffer[ctx->buffer_len++] = (uint8_t)(len >> 24);
+    ctx->buffer[ctx->buffer_len++] = (uint8_t)(len >> 16);
+    ctx->buffer[ctx->buffer_len++] = (uint8_t)(len >> 8);
+    ctx->buffer[ctx->buffer_len++] = (uint8_t)(len);
+}
